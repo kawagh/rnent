@@ -18,6 +18,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let re_tag1 = Regex::new(r"^# tag1").unwrap();
 
     let mut is_in_target_context = false;
+    // TODO added subcommand to create files
+    // TODO list files
     for line in BufReader::new(File::open("test.md")?).lines() {
         let l = line?;
         match is_in_target_context {
