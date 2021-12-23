@@ -11,7 +11,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .about("Tool to write note")
         .get_matches();
 
-
     // pattern to change context
     let re = Regex::new(r"^# .*").unwrap();
 
@@ -21,21 +20,22 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut is_in_target_context = false;
     for line in BufReader::new(File::open("test.md")?).lines() {
         let l = line?;
-        if is_in_target_context {
-            if re_tag1.is_match(&l) {
-                continue;
-            } else if re.is_match(&l) {
-                is_in_target_context = false;
-                continue;
+        match is_in_target_context {
+            true => {
+                if re_tag1.is_match(&l) {
+                    continue;
+                } else if re.is_match(&l) {
+                    is_in_target_context = false;
+                    continue;
+                }
+                println!("{}", l);
             }
-            println!("{}", l);
-        } else {
-            if re_tag1.is_match(&l) {
-                is_in_target_context = true;
-            } else if re.is_match(&l) {
-                is_in_target_context = false;
+            false => {
+                if re_tag1.is_match(&l) {
+                    is_in_target_context = true;
+                }
             }
-        }
+        };
     }
     Ok(())
 }
