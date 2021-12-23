@@ -1,7 +1,9 @@
+extern crate chrono;
 extern crate clap;
 extern crate regex;
+use chrono::Local;
 use regex::Regex;
-use std::{fs::File, io::BufRead, io::BufReader};
+use std::{fs::File, io::BufRead, io::BufReader, io::Write};
 
 use clap::App;
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -39,5 +41,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         };
     }
+    let utc_date = Local::today().format("%Y-%m-%d");
+    let mut new_file = File::create(utc_date.to_string() + ".md")?;
+    new_file.write_all(String::from("new\n").as_bytes())?;
+    println!("{}", utc_date);
     Ok(())
 }
