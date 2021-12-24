@@ -9,7 +9,11 @@ use std::{fs::File, io::BufRead, io::BufReader, io::Write};
 
 use clap::App;
 
-fn extract_line(filename: &str, tag: &str) -> Result<(), Box<dyn std::error::Error>> {
+fn extract_line(
+    output_file: &mut File,
+    input_filename: &str,
+    tag: &str,
+) -> Result<(), Box<dyn std::error::Error>> {
     // pattern to change context
     let re_general_tag = Regex::new(r"^# .*").unwrap();
 
@@ -19,7 +23,7 @@ fn extract_line(filename: &str, tag: &str) -> Result<(), Box<dyn std::error::Err
     let re_target_tag = Regex::new(&tag_source).unwrap();
 
     let mut is_in_target_context = false;
-    for line in BufReader::new(File::open(filename)?).lines() {
+    for line in BufReader::new(File::open(input_filename)?).lines() {
         let l = line?;
         match is_in_target_context {
             true => {
@@ -29,7 +33,9 @@ fn extract_line(filename: &str, tag: &str) -> Result<(), Box<dyn std::error::Err
                     is_in_target_context = false;
                     continue;
                 }
-                println!("{}", l);
+                if let Err(e) = writeln!(output_file, "{}", l) {
+                    println!("Writing error: {}", e.to_string());
+                }
             }
             false => {
                 if re_target_tag.is_match(&l) {
@@ -50,8 +56,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // TODO added subcommand to create files
 
     let utc_date = Local::today().format("%Y-%m-%d");
-    let mut new_file = File::create(utc_date.to_string() + ".md")?;
-    new_file.write_all(String::from("new\n").as_bytes())?;
+    let mut output_file = File::create(utc_date.to_string() + ".md")?;
+    output_file.write_all(String::from("new\n").as_bytes())?;
     let mut files: Vec<std::path::PathBuf> = glob("./test_resources/*.md")
         .unwrap()
         .filter_map(Result::ok)
@@ -59,8 +65,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     files.sort();
 
     for f in &files {
+        if let Err(e) = writeln!(output_file, "{}", f.display()) {
+            println!("Writing error: {}", e.to_string());
+        };
         println!("{}", f.display());
-        extract_line(f.to_str().unwrap(), "a");
+        extract_line(&mut output_file, f.to_str().unwrap(), "a").ok();
     }
     println!("{:?}", files);
 
