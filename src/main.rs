@@ -7,7 +7,7 @@ use glob::glob;
 use regex::Regex;
 use std::{fs::File, io::BufRead, io::BufReader, io::Write};
 
-use clap::App;
+use clap::{App, Arg};
 
 fn extract_line(
     output_file: &mut File,
@@ -48,31 +48,42 @@ fn extract_line(
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let _matches = App::new("rnent")
+    let matches = App::new("rnent")
         .version("1.0")
         .author("kawagh")
         .about("Tool to write note")
+        .arg(
+            Arg::with_name("synthe")
+                .help("synthe by the tag")
+                .short("s")
+                .takes_value(true),
+        )
         .get_matches();
     // TODO added subcommand to create files
 
-    let utc_date = Local::today().format("%Y-%m-%d");
-    let mut output_file = File::create(utc_date.to_string() + ".md")?;
-    output_file.write_all(String::from("new\n").as_bytes())?;
-    let mut files: Vec<std::path::PathBuf> = glob("./test_resources/*.md")
-        .unwrap()
-        .filter_map(Result::ok)
-        .collect();
-    files.sort();
+    if let Some(tag) = matches.value_of("synthe") {
+        println!("the tag: {}", tag);
 
-    for f in &files {
-        if let Err(e) = writeln!(output_file, "{}", f.display()) {
-            println!("Writing error: {}", e.to_string());
-        };
-        println!("{}", f.display());
-        extract_line(&mut output_file, f.to_str().unwrap(), "a").ok();
+        let utc_date = Local::today().format("%Y-%m-%d");
+        let mut output_file = File::create(utc_date.to_string() + ".md")?;
+        output_file.write_all(String::from("new\n").as_bytes())?;
+        let mut files: Vec<std::path::PathBuf> = glob("./test_resources/*.md")
+            .unwrap()
+            .filter_map(Result::ok)
+            .collect();
+        files.sort();
+
+        for f in &files {
+            if let Err(e) = writeln!(output_file, "{}", f.display()) {
+                println!("Writing error: {}", e.to_string());
+            };
+            println!("{}", f.display());
+            extract_line(&mut output_file, f.to_str().unwrap(), &tag.to_string()).ok();
+        }
+        println!("{:?}", files);
+
+        println!("{}", utc_date);
     }
-    println!("{:?}", files);
 
-    println!("{}", utc_date);
     Ok(())
 }
