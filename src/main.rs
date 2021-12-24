@@ -1,7 +1,9 @@
 extern crate chrono;
 extern crate clap;
+extern crate glob;
 extern crate regex;
 use chrono::Local;
+use glob::glob;
 use regex::Regex;
 use std::{fs::File, io::BufRead, io::BufReader, io::Write};
 
@@ -44,6 +46,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let utc_date = Local::today().format("%Y-%m-%d");
     let mut new_file = File::create(utc_date.to_string() + ".md")?;
     new_file.write_all(String::from("new\n").as_bytes())?;
+    let mut files: Vec<std::path::PathBuf> = glob("./test_resources/*.md").unwrap().filter_map(Result::ok).collect();
+    files.sort();
+    println!("{:?}", files);
+
     println!("{}", utc_date);
     Ok(())
 }
