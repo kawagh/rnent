@@ -5,7 +5,7 @@ extern crate regex;
 use chrono::Local;
 use glob::glob;
 use regex::Regex;
-use std::{fs::File, io::BufRead, io::BufReader, io::Write};
+use std::{env, fs::File, io::BufRead, io::BufReader, io::Write};
 
 use clap::{App, Arg};
 
@@ -33,6 +33,7 @@ fn extract_line(
                     is_in_target_context = false;
                     continue;
                 }
+                dbg!(&l);
                 if let Err(e) = writeln!(output_file, "{}", l) {
                     println!("Writing error: {}", e.to_string());
                 }
@@ -48,6 +49,14 @@ fn extract_line(
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let ment_dir = match env::var("MENT_DIR") {
+        Ok(ment_dir) => ment_dir,
+        Err(_) => {
+            panic!("MENT_DIR is not set")
+        }
+    };
+    println!("{}", ment_dir);
+
     let matches = App::new("rnent")
         .version("1.0")
         .author("kawagh")
@@ -65,24 +74,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("the tag: {}", tag);
 
         let utc_date = Local::today().format("%Y-%m-%d");
-        let mut output_file = File::create(utc_date.to_string() + ".md")?;
-        output_file.write_all(String::from("new\n").as_bytes())?;
-        let mut files: Vec<std::path::PathBuf> = glob("./test_resources/*.md")
+        let mut output_file = File::create("synthe_".to_owned() + tag + &utc_date.to_string() + ".md")?;
+
+        let glob_pattern = ment_dir + "/**/*.md";
+        let mut files: Vec<std::path::PathBuf> = glob(&glob_pattern)
             .unwrap()
             .filter_map(Result::ok)
             .collect();
         files.sort();
 
         for f in &files {
-            if let Err(e) = writeln!(output_file, "{}", f.display()) {
-                println!("Writing error: {}", e.to_string());
-            };
-            println!("{}", f.display());
             extract_line(&mut output_file, f.to_str().unwrap(), &tag.to_string()).ok();
         }
-        println!("{:?}", files);
-
-        println!("{}", utc_date);
     }
 
     Ok(())

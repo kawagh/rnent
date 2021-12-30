@@ -3,5 +3,5 @@
 
 ## run
 ```
-cargo run -- -s a
+cargo run -- -s rust
 ```
