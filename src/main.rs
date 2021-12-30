@@ -23,11 +23,11 @@ fn extract_line(
     let re_target_tag = Regex::new(&tag_source).unwrap();
 
     let mut is_in_target_context = false;
+    let mut sbuf = String::new();
     for line in read_to_string(input_filename)
         .expect("could not open the file")
         .lines()
     {
-        // let l = line;
         match is_in_target_context {
             true => {
                 if re_target_tag.is_match(&line) {
@@ -36,10 +36,8 @@ fn extract_line(
                     is_in_target_context = false;
                     continue;
                 }
-                // dbg!(&l);
-                if let Err(e) = writeln!(output_file, "{}", line) {
-                    println!("Writing error: {}", e.to_string());
-                }
+                sbuf.push_str(line);
+                sbuf.push_str("\n");
             }
             false => {
                 if re_target_tag.is_match(&line) {
@@ -47,6 +45,9 @@ fn extract_line(
                 }
             }
         };
+    }
+    if !sbuf.is_empty() {
+        writeln!(output_file, "{}", sbuf).expect("Writing error");
     }
     Ok(())
 }
