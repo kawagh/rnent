@@ -5,7 +5,7 @@ extern crate regex;
 use chrono::Local;
 use glob::glob;
 use regex::Regex;
-use std::{env, fs::File, io::BufRead, io::BufReader, io::Write};
+use std::{env, fs, fs::File, io::BufRead, io::BufReader, io::Write};
 
 use clap::{App, Arg};
 
@@ -47,6 +47,26 @@ fn extract_line(
     }
     Ok(())
 }
+// fn list_tags(base_path: &str) -> Vec<String> {
+// }
+fn run_synthe(tag: &str, ment_dir: &str) -> Result<(), Box<dyn std::error::Error>> {
+    println!("the tag: {}", tag);
+
+    let utc_date = Local::today().format("%Y-%m-%d");
+    let mut output_file = File::create("synthe_".to_owned() + tag + &utc_date.to_string() + ".md")?;
+
+    let glob_pattern = ment_dir.to_owned() + "/**/*.md";
+    let mut files: Vec<std::path::PathBuf> = glob(&glob_pattern)
+        .unwrap()
+        .filter_map(Result::ok)
+        .collect();
+    files.sort();
+
+    for f in &files {
+        extract_line(&mut output_file, f.to_str().unwrap(), &tag.to_string()).ok();
+    }
+    Ok(())
+}
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let ment_dir = match env::var("MENT_DIR") {
@@ -55,7 +75,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             panic!("MENT_DIR is not set")
         }
     };
-    println!("{}", ment_dir);
+    let synthe_path = ment_dir.clone() + "/synthe";
+    dbg!(&synthe_path);
+    let flist = fs::read_dir(&synthe_path).unwrap();
+    // let synthed_tags = flist.iter()
+    for p in flist {
+        println!("{:?}", p.unwrap().path().file_stem().unwrap());
+    }
 
     let matches = App::new("rnent")
         .version("1.0")
@@ -68,25 +94,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .takes_value(true),
         )
         .get_matches();
-    // TODO added subcommand to create files
 
     if let Some(tag) = matches.value_of("synthe") {
-        println!("the tag: {}", tag);
-
-        let utc_date = Local::today().format("%Y-%m-%d");
-        let mut output_file = File::create("synthe_".to_owned() + tag + &utc_date.to_string() + ".md")?;
-
-        let glob_pattern = ment_dir + "/**/*.md";
-        let mut files: Vec<std::path::PathBuf> = glob(&glob_pattern)
-            .unwrap()
-            .filter_map(Result::ok)
-            .collect();
-        files.sort();
-
-        for f in &files {
-            extract_line(&mut output_file, f.to_str().unwrap(), &tag.to_string()).ok();
-        }
+        run_synthe(tag, &ment_dir).expect("synthe command failed");
     }
+    // TODO added subcommand to create files
 
     Ok(())
 }
