@@ -5,7 +5,7 @@ extern crate regex;
 use chrono::Local;
 use glob::glob;
 use regex::Regex;
-use std::{env, fs, fs::File, io::BufRead, io::BufReader, io::Write};
+use std::{env, fs, fs::read_to_string, fs::File, io::Write};
 
 use clap::{App, Arg};
 
@@ -23,23 +23,26 @@ fn extract_line(
     let re_target_tag = Regex::new(&tag_source).unwrap();
 
     let mut is_in_target_context = false;
-    for line in BufReader::new(File::open(input_filename)?).lines() {
-        let l = line?;
+    for line in read_to_string(input_filename)
+        .expect("could not open the file")
+        .lines()
+    {
+        // let l = line;
         match is_in_target_context {
             true => {
-                if re_target_tag.is_match(&l) {
+                if re_target_tag.is_match(&line) {
                     continue;
-                } else if re_general_tag.is_match(&l) {
+                } else if re_general_tag.is_match(&line) {
                     is_in_target_context = false;
                     continue;
                 }
                 // dbg!(&l);
-                if let Err(e) = writeln!(output_file, "{}", l) {
+                if let Err(e) = writeln!(output_file, "{}", line) {
                     println!("Writing error: {}", e.to_string());
                 }
             }
             false => {
-                if re_target_tag.is_match(&l) {
+                if re_target_tag.is_match(&line) {
                     is_in_target_context = true;
                 }
             }
