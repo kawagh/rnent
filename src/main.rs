@@ -33,7 +33,7 @@ fn extract_line(
                     is_in_target_context = false;
                     continue;
                 }
-                dbg!(&l);
+                // dbg!(&l);
                 if let Err(e) = writeln!(output_file, "{}", l) {
                     println!("Writing error: {}", e.to_string());
                 }
@@ -47,8 +47,6 @@ fn extract_line(
     }
     Ok(())
 }
-// fn list_tags(base_path: &str) -> Vec<String> {
-// }
 fn run_synthe(tag: &str, ment_dir: &str) -> Result<(), Box<dyn std::error::Error>> {
     println!("the tag: {}", tag);
 
@@ -68,6 +66,22 @@ fn run_synthe(tag: &str, ment_dir: &str) -> Result<(), Box<dyn std::error::Error
     Ok(())
 }
 
+// update all synthesized tags
+fn run_update(ment_dir: &str) {
+    let synthe_path = ment_dir.clone().to_owned() + "/synthe";
+    dbg!(&synthe_path);
+    let flist = fs::read_dir(&synthe_path).unwrap();
+    for p in flist {
+        let _path = p.unwrap().path();
+        let synthed_tag = _path.file_stem().unwrap().to_str().unwrap();
+        println!("{}", synthed_tag);
+        if synthed_tag == "week" {
+            continue;
+        }
+        run_synthe(&synthed_tag, &ment_dir).expect("synthe command failed");
+    }
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let ment_dir = match env::var("MENT_DIR") {
         Ok(ment_dir) => ment_dir,
@@ -75,13 +89,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             panic!("MENT_DIR is not set")
         }
     };
-    let synthe_path = ment_dir.clone() + "/synthe";
-    dbg!(&synthe_path);
-    let flist = fs::read_dir(&synthe_path).unwrap();
-    // let synthed_tags = flist.iter()
-    for p in flist {
-        println!("{:?}", p.unwrap().path().file_stem().unwrap());
-    }
+
+    // update all synthesized tags
+    run_update(&ment_dir);
 
     let matches = App::new("rnent")
         .version("1.0")
