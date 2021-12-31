@@ -7,7 +7,7 @@ use glob::glob;
 use regex::Regex;
 use std::{env, fs, fs::read_to_string, fs::File, io::Write};
 
-use clap::{App, Arg};
+use clap::{App, Arg, SubCommand};
 
 fn extract_line(
     output_file: &mut File,
@@ -94,9 +94,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     };
 
-    // update all synthesized tags
-    run_update(&ment_dir);
-
     let matches = App::new("rnent")
         .version("1.0")
         .author("kawagh")
@@ -107,12 +104,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .short("s")
                 .takes_value(true),
         )
+        .subcommand(SubCommand::with_name("update").about("update all synthesized documents"))
         .get_matches();
 
+    // TODO added subcommand to create files
     if let Some(tag) = matches.value_of("synthe") {
         run_synthe(tag, &ment_dir).expect("synthe command failed");
     }
-    // TODO added subcommand to create files
+    if let Some(_) = matches.subcommand_matches("update") {
+        // update all synthesized tags
+        run_update(&ment_dir);
+        println!("update");
+    }
 
     Ok(())
 }
