@@ -21,23 +21,23 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .version("1.0")
         .author("kawagh")
         .about("Tool to write note")
-        .arg(
-            Arg::with_name("synthe")
-                .help("synthe by the tag")
-                .short("s")
-                .takes_value(true),
+        .subcommand(
+            SubCommand::with_name("synthe")
+                .about("synthesize from daily files by tag")
+                .arg(Arg::with_name("tag").help("tag to extract").index(1)),
         )
         .subcommand(SubCommand::with_name("update").about("update all synthesized documents"))
         .get_matches();
 
-    // TODO added subcommand to create files
-    if let Some(tag) = matches.value_of("synthe") {
-        do_synthe(tag, &ment_dir).expect("synthe command failed");
-    }
     if let Some(_) = matches.subcommand_matches("update") {
-        // update all synthesized tags
         do_update(&ment_dir);
         println!("update");
+    }
+    if let Some(synthe_match) = matches.subcommand_matches("synthe") {
+        let synthe_tag = synthe_match
+            .value_of("tag")
+            .expect("tag is needed to synthe");
+        do_synthe(synthe_tag, &ment_dir).expect("synthe command failed");
     }
 
     Ok(())
