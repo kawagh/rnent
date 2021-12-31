@@ -27,6 +27,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .arg(Arg::with_name("tag").help("tag to extract").index(1)),
         )
         .subcommand(SubCommand::with_name("update").about("update all synthesized documents"))
+        .subcommand(SubCommand::with_name("week").about("output notes of recent 7 days(unimplemented!)"))
         .get_matches();
 
     if let Some(_) = matches.subcommand_matches("update") {
@@ -38,6 +39,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .value_of("tag")
             .expect("tag is needed to synthe");
         do_synthe(synthe_tag, &ment_dir).expect("synthe command failed");
+    }
+    if let Some(_) = matches.subcommand_matches("week") {
+        unimplemented!();
     }
 
     Ok(())
