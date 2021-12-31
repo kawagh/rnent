@@ -9,7 +9,6 @@ use crate::cmd_update::do_update;
 use std::env;
 
 use clap::{App, Arg, SubCommand};
-
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let ment_dir = match env::var("MENT_DIR") {
         Ok(ment_dir) => ment_dir,
